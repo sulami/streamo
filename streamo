@@ -90,6 +90,14 @@ for c in `seq ${CHANNELS}`; do
     AUDIOCODE="$AUDIOCODE -f $AUDIO -i default"
 done
 
+if [ ${CHANNELS} != 0 ]; then
+    MIXCODE="-filter_complex \
+             amix=inputs=${CHANNELS}:duration=first:dropout_transition=3 \
+             -acodec libmp3lame \
+             -ar 44100 \
+             -b:a 128k"
+fi
+
 FULLCOMMAND="ffmpeg \
 -hide_banner \
 -f x11grab \
@@ -105,10 +113,7 @@ ${AUDIOCODE} \
 -maxrate ${BITRATE}k \
 -bufsize $((2 * ${BITRATE}))k \
 -g $((2 * ${FRAMERATE})) \
--filter_complex amix=inputs=${CHANNELS}:duration=first:dropout_transition=3 \
--acodec libmp3lame \
--ar 44100 \
--b:a 128k \
+${MIXCODE} \
 -threads ${THREADS} \
 -pix_fmt yuv420p \
 -f flv rtmp://live.justin.tv/app/${STREAMKEY}"
