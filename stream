@@ -1,3 +1,11 @@
+#
+# Streamo - A sort of simple solution to stream to Twitch.tv from Linux and
+# other X11-based operating systems
+#
+# Copyright (c) 2015, Robin 'sulami' Schroer <sulami@peerwire.org>
+# See LICENSE for more information
+#
+
 SIZE="1920x1080"
 RESOLUTION="1280x720"
 FRAMERATE="30"
