@@ -16,7 +16,7 @@ AUDIO="pulse"
 CHANNELS="2"
 VERBOSE=false
 
-while getopts ":s:r:f:k:t:b:a:c:vh" opt; do
+while getopts ":s:r:f:k:t:b:a:c:veh" opt; do
     case $opt in
         s)
             SIZE=$OPTARG
@@ -42,6 +42,9 @@ while getopts ":s:r:f:k:t:b:a:c:vh" opt; do
         c)
             CHANNELS=$OPTARG
             ;;
+        e)
+            ECHO=true
+            ;;
         v)
             VERBOSE=true
             ;;
@@ -56,6 +59,7 @@ while getopts ":s:r:f:k:t:b:a:c:vh" opt; do
             echo "  -a <str>        - Audio framework (def: pulse)"
             echo "  -c <int>        - Audio Channels (def: 2)"
             echo "  -v              - Verbose output"
+            echo "  -e              - Echo the ffmpeg command and exit"
             echo "  -h              - This help output"
             exit 0
             ;;
@@ -74,12 +78,12 @@ for c in `seq ${CHANNELS}`; do
     AUDIOCODE="$AUDIOCODE -f $AUDIO -i default"
 done
 
-ffmpeg \
+FULLCOMMAND="ffmpeg \
 -f x11grab \
 -video_size ${SIZE} \
 -framerate ${FRAMERATE} \
 -i :0.0+0,0 \
-$AUDIOCODE \
+${AUDIOCODE} \
 -vcodec libx264 \
 -preset veryfast \
 -s ${RESOLUTION} \
@@ -94,7 +98,14 @@ $AUDIOCODE \
 -b:a 128k \
 -threads ${THREADS} \
 -pix_fmt yuv420p \
--f flv rtmp://live.justin.tv/app/${STREAMKEY}
+-f flv rtmp://live.justin.tv/app/${STREAMKEY}"
+
+if [ ${ECHO} ]; then
+    echo ${FULLCOMMAND}
+    exit 0
+else
+    ${FULLCOMMAND}
+fi
 
 # vim: ft=sh
 
