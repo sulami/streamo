@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 #
 # Streamo - A sort of simple solution to stream to Twitch.tv from Linux and
 # other X11-based operating systems
@@ -6,6 +6,7 @@
 # Copyright (c) 2015, Robin 'sulami' Schroer <sulami@peerwire.org>
 # See LICENSE for more information
 #
+
 
 SIZE="1920x1080"
 RESOLUTION="1280x720"
@@ -15,133 +16,160 @@ THREADS="4"
 BITRATE="2500"
 AUDIO="pulse"
 CHANNELS="2"
-VERBOSE=false
-ECHO=false
-NOBUF="stdbuf -e0 -o0"
+VERBOSE="false"
+SIMULATE="false"
+FFMPEG='ffmpeg'
 
-while getopts ":s:r:f:k:t:b:a:c:veh" opt; do
-    case $opt in
-        s)
-            SIZE=$OPTARG
-            ;;
-        r)
-            RESOLUTION=$OPTARG
-            ;;
-        f)
-            FRAMERATE=$OPTARG
-            ;;
-        k)
-            STREAMKEY=$OPTARG
-            ;;
-        t)
-            THREADS=$OPTARG
-            ;;
-        b)
-            BITRATE=$OPTARG
-            ;;
-        a)
-            AUDIO=$OPTARG
-            ;;
-        c)
-            CHANNELS=$OPTARG
-            ;;
-        e)
-            ECHO=true
-            ;;
-        v)
-            VERBOSE=true
-            ;;
-        h)
-            echo "Options:"
-            echo "  -s <int>x<int>  - Desktop size (def: 1920x1080)"
-            echo "  -r <int>x<int>  - Stream resolution (def: 1280x720)"
-            echo "  -f <int>        - Framerate (def: 30)"
-            echo "  -k <str>        - Streamkey (Acquire from Twitch.tv)"
-            echo "  -t <int>        - Threads (def: 4)"
-            echo "  -b <int>        - Video bitrate in kb/s (def: 2500)"
-            echo "  -a <str>        - Audio framework (def: pulse)"
-            echo "  -c <int>        - Audio Channels (def: 2)"
-            echo "  -v              - Verbose output"
-            echo "  -e              - Echo the ffmpeg command and exit"
-            echo "  -h              - This help output"
-            exit 0
-            ;;
-        \?)
-            echo "Invalid option: -$OPTARG" >&2
-            exit 1
-            ;;
-        :)
-            echo "Option -$OPTARG requires and argument" >&2
-            exit 1
-            ;;
-    esac
-done
+#If you want to print command on the std, run shell with -x
+# sh -x ./shellscript
 
-if [ "$STREAMKEY" == "" ]; then
-    if [ ${ECHO} == true ]; then
-        echo "Warning: You need to specify a stream key with -k"
-    else
-        echo "Error: You need to specify a stream key with -k"
-        exit 1
-    fi
-fi
+log () {
+	#You can have here number and scale verbosity accordingly
+	[ "${VERBOSE}" = "true"  ] && echo "$(date +'%m-%d-%y %T') $1 $2"
+}
 
-for c in `seq ${CHANNELS}`; do
-    AUDIOCODE="$AUDIOCODE -f $AUDIO -i default"
-done
+die () {
+	log "INFO" "Exiting with error code $1"
+	exit $1
+}
 
-if [ ${CHANNELS} != 0 ]; then
-    MIXCODE="-filter_complex \
-             amix=inputs=${CHANNELS}:duration=first:dropout_transition=3 \
-             -acodec libmp3lame \
-             -ar 44100 \
-             -b:a 128k"
-fi
+usage () {
+	echo "Options:"
+	echo "  -s <int>x<int>  - Desktop size (def: 1920x1080)"
+	echo "  -r <int>x<int>  - Stream resolution (def: 1280x720)"
+	echo "  -f <int>        - Framerate (def: 30)"
+	echo "  -k <str>        - Streamkey (Acquire from Twitch.tv)"
+	echo "  -t <int>        - Threads (def: 4)"
+	echo "  -b <int>        - Video bitrate in kb/s (def: 2500)"
+	echo "  -a <str>        - Audio framework (def: pulse)"
+	echo "  -c <int>        - Audio Channels (def: 2)"
+	echo "  -v              - Verbose output"
+	echo "  -e              - Simulate execution"
+	echo "  -h              - This help output"
+}
 
-FULLCOMMAND="ffmpeg \
--hide_banner \
--f x11grab \
--video_size ${SIZE} \
--framerate ${FRAMERATE} \
--i ${DISPLAY}+0,0 \
-${AUDIOCODE} \
--vcodec libx264 \
--preset veryfast \
--s ${RESOLUTION} \
--b:v ${BITRATE}k \
--minrate ${BITRATE}k \
--maxrate ${BITRATE}k \
--bufsize $((2 * ${BITRATE}))k \
--g $((2 * ${FRAMERATE})) \
-${MIXCODE} \
--threads ${THREADS} \
--pix_fmt yuv420p \
--f flv rtmp://live.justin.tv/app/${STREAMKEY}"
+loadOps () {
+	while getopts ":s:r:f:k:t:b:a:c:veh" opt; do
+		case $opt in
+		    s)
+		        SIZE=$OPTARG
+		        ;;
+		    r)
+		        RESOLUTION=$OPTARG
+		        ;;
+		    f)
+		        FRAMERATE=$OPTARG
+		        ;;
+		    k)
+		        STREAMKEY=$OPTARG
+		        ;;
+		    t)
+		        THREADS=$OPTARG
+		        ;;
+		    b)
+		        BITRATE=$OPTARG
+		        ;;
+		    a)
+		        AUDIO=$OPTARG
+		        ;;
+		    c)
+		        CHANNELS=$OPTARG
+		        ;;
+		    e)
+		        SIMULATE=true
+		        ;;
+		    v)
+		        VERBOSE=true
+		        ;;
+		    h)
+		        usage
+				die 0
+		        ;;
+		    \?)
+		        log "ERROR" "Invalid option: -$OPTARG"
+		        die 1
+		        ;;
+		    :)
+		        log "ERROR" "Option -$OPTARG requires and argument"
+		        die 1
+		        ;;
+		esac
+	done
+}
 
-if [ ${ECHO} == true ]; then
-    echo ${FULLCOMMAND}
-    exit 0
-else
-    if [ ${VERBOSE} == false ]; then
-        ${NOBUF} ${FULLCOMMAND} 2>&1 | \
-        ${NOBUF} tr '\r' '\n' | \
-        ${NOBUF} grep 'fps=' | \
-        ${NOBUF} sed 's/=[ ]*/=/g' | \
-        ${NOBUF} awk ' \
-            split($2, f, "=") \
-            split($6, b, "=") \
-            split($8, d, "=") \
-            { print \
-                "FPS:", f[2], \
-                "Bitrate:", b[2], \
-                "Dropped Frames:", d[2], \
-                "\r" \
-            } \
-            ORS=""'
-    else
-        ${FULLCOMMAND}
-    fi
-fi
+checkAndSetVars () {
+	if [ -z "$STREAMKEY" ]; then
+		    log "ERROR" "Warning: You need to specify a stream key"
+		    return 1
+	fi
 
-# vim: ft=sh
+	for c in `seq ${CHANNELS}`; do
+		AUDIOCODE="$AUDIOCODE -f $AUDIO -i default"
+	done
+
+	[ ${CHANNELS} -ne 0 ] && {
+		MIXCODE="-filter_complex \
+		         amix=inputs=${CHANNELS}:duration=first:dropout_transition=3 \
+		         -acodec libmp3lame \
+		         -ar 44100 \
+		         -b:a 128k"
+	}
+
+	FFMPEGARGS="-hide_banner -f x11grab \
+				-video_size ${SIZE} \
+				-framerate ${FRAMERATE} \
+				-i ${DISPLAY}+0,0 \
+				${AUDIOCODE} \
+				-vcodec libx264 \
+				-preset veryfast \
+				-s ${RESOLUTION} \
+				-b:v ${BITRATE}k \
+				-minrate ${BITRATE}k \
+				-maxrate ${BITRATE}k \
+				-bufsize $((2 * ${BITRATE}))k \
+				-g $((2 * ${FRAMERATE})) \
+				${MIXCODE} \
+				-threads ${THREADS} \
+				-pix_fmt yuv420p \
+				-f flv rtmp://live.justin.tv/app/${STREAMKEY}"
+	
+	#TODO add check if FFMPEG is installed
+
+	return 0
+}
+
+
+printOps () {
+	local formatedText=$( echo "$FFMPEG $FFMPEGARGS" | sed -e 's/\s[\s]*/ /g')
+	log "INFO" "Simulating execution ..."
+	echo "$formatedText"
+}
+    
+runStream () {
+	log "INFO" "Starting to stream with ${FFMPEG}"
+	eval "$FFMPEG $FFMPEGARGS" || {
+		log "ERROR" "ffmpeg finished with error or not found"
+		return 1
+	}
+	log "INFO" "Stream finished"
+}
+
+execWork () {
+	if [ "$SIMULATE" = "false" ]
+	then
+		runStream
+	else
+		printOps
+	fi
+}
+
+log "INFO" "START $0"
+
+loadOps "$@"
+checkAndSetVars || die 1
+execWork || die 1 
+
+die 0
+
+# vim: ts=4 sw=4 sts=4 ft=sh
 

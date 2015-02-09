@@ -24,10 +24,6 @@ regular use-case should look something like this:
 
     streamo -k live_123_abc -f 60 -r 1920x1080 -c 1 -t 8
 
-To just echo the ffmpeg command without executing it use `-e`:
-
-    streamo -k live_123_abc -e
-
 When using PulseAudio, you can use `pavucontrol` to assign the recording inputs
 to monitor your audio output and your microphone as well as the corrosponing
 volume levels.
