@@ -42,7 +42,7 @@ usage () {
 	echo "  -t <int>        - Threads (def: 4)"
 	echo "  -b <int>        - Video bitrate in kb/s (def: 2500)"
 	echo "  -a <str>        - Audio framework (def: pulse)"
-	echo "  -c <int>        - Audio Channels (def: 2)"
+	echo "  -c <int>        - Audio channels (def: 2)"
 	echo "  -v              - Verbose output"
 	echo "  -e              - Simulate execution"
 	echo "  -h              - This help output"
@@ -90,7 +90,7 @@ loadOps () {
 		        die 1
 		        ;;
 		    :)
-		        log "ERROR" "Option -$OPTARG requires and argument"
+		        log "ERROR" "Option -$OPTARG requires an argument"
 		        die 1
 		        ;;
 		esac
