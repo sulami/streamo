@@ -15,6 +15,7 @@ THREADS="4"
 BITRATE="2500"
 AUDIO="pulse"
 CHANNELS="2"
+LOGLEVEL="warning"
 VERBOSE=false
 ECHO=false
 
@@ -89,7 +90,13 @@ for c in `seq ${CHANNELS}`; do
     AUDIOCODE="$AUDIOCODE -f $AUDIO -i default"
 done
 
+if [ ${VERBOSE} == true ]; then
+    LOGLEVEL="info"
+fi
+
 FULLCOMMAND="ffmpeg \
+-loglevel ${LOGLEVEL} \
+-hide_banner \
 -f x11grab \
 -video_size ${SIZE} \
 -framerate ${FRAMERATE} \
@@ -115,7 +122,7 @@ if [ ${ECHO} == true ]; then
     echo ${FULLCOMMAND}
     exit 0
 else
-    ${FULLCOMMAND}
+    ${FULLCOMMAND} 2>&1
 fi
 
 # vim: ft=sh
