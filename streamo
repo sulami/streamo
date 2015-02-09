@@ -15,9 +15,9 @@ THREADS="4"
 BITRATE="2500"
 AUDIO="pulse"
 CHANNELS="2"
-LOGLEVEL="warning"
 VERBOSE=false
 ECHO=false
+NOBUF="stdbuf -e0 -o0"
 
 while getopts ":s:r:f:k:t:b:a:c:veh" opt; do
     case $opt in
@@ -90,12 +90,7 @@ for c in `seq ${CHANNELS}`; do
     AUDIOCODE="$AUDIOCODE -f $AUDIO -i default"
 done
 
-if [ ${VERBOSE} == true ]; then
-    LOGLEVEL="info"
-fi
-
 FULLCOMMAND="ffmpeg \
--loglevel ${LOGLEVEL} \
 -hide_banner \
 -f x11grab \
 -video_size ${SIZE} \
@@ -122,7 +117,15 @@ if [ ${ECHO} == true ]; then
     echo ${FULLCOMMAND}
     exit 0
 else
-    ${FULLCOMMAND} 2>&1
+    if [ ${VERBOSE} == false ]; then
+        ${NOBUF} ${FULLCOMMAND} 2>&1 | \
+        ${NOBUF} tr '\r' '\n' | \
+        ${NOBUF} grep 'fps=' | \
+        ${NOBUF} awk 'split($9, b, "=") split($11, d, "=") \
+        {print "FPS:", $4, "Bitrate:", b[2], "Dropped Frames:", d[2], "\r"} ORS=""'
+    else
+        ${FULLCOMMAND}
+    fi
 fi
 
 # vim: ft=sh

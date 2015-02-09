@@ -20,8 +20,6 @@ regular use-case should look something like this:
 
     streamo -k live_123_abc -f 60 -r 1920x1080 -c 1
 
-Once it is running, you can quit gracefully with `q`.
-
     streamo -e
 
 will echo the generated ffmpeg command to stdout and exit.
