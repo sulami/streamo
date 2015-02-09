@@ -26,6 +26,10 @@ Once it is running, you can quit gracefully with `q`.
 
 will echo the generated ffmpeg command to stdout and exit.
 
+When using PulseAudio, you can use `pavucontrol` to assign the recording inputs
+to monitor your audio output and your microphone as well as the corrosponing
+volume levels.
+
 TODO
 ----
 
