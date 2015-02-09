@@ -93,7 +93,7 @@ FULLCOMMAND="ffmpeg \
 -f x11grab \
 -video_size ${SIZE} \
 -framerate ${FRAMERATE} \
--i :0.0+0,0 \
+-i ${DISPLAY}+0,0 \
 ${AUDIOCODE} \
 -vcodec libx264 \
 -preset veryfast \
