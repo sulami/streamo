@@ -74,6 +74,15 @@ while getopts ":s:r:f:k:t:b:a:c:veh" opt; do
     esac
 done
 
+if [ "$STREAMKEY" == "" ]; then
+    if [ ${ECHO} ]; then
+        echo "Warning: You need to specify a stream key with -k"
+    else
+        echo "Error: You need to specify a stream key with -k"
+        exit 1
+    fi
+fi
+
 for c in `seq ${CHANNELS}`; do
     AUDIOCODE="$AUDIOCODE -f $AUDIO -i default"
 done
