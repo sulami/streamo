@@ -88,3 +88,5 @@ $AUDIOCODE \
 -pix_fmt yuv420p \
 -f flv rtmp://live.justin.tv/app/${STREAMKEY}
 
+# vim: ft=sh
+
