@@ -1,3 +1,4 @@
+#!/bin/sh
 #
 # Streamo - A sort of simple solution to stream to Twitch.tv from Linux and
 # other X11-based operating systems
