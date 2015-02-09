@@ -77,7 +77,7 @@ while getopts ":s:r:f:k:t:b:a:c:veh" opt; do
 done
 
 if [ "$STREAMKEY" == "" ]; then
-    if [ ${ECHO} ]; then
+    if [ ${ECHO} == true ]; then
         echo "Warning: You need to specify a stream key with -k"
     else
         echo "Error: You need to specify a stream key with -k"
@@ -111,7 +111,7 @@ ${AUDIOCODE} \
 -pix_fmt yuv420p \
 -f flv rtmp://live.justin.tv/app/${STREAMKEY}"
 
-if [ ${ECHO} ]; then
+if [ ${ECHO} == true ]; then
     echo ${FULLCOMMAND}
     exit 0
 else
