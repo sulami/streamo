@@ -15,6 +15,7 @@ BITRATE="2048"
 AUDIO="pulse"
 CHANNELS="2"
 VERBOSE=false
+ECHO=false
 
 while getopts ":s:r:f:k:t:b:a:c:veh" opt; do
     case $opt in
