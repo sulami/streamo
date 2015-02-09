@@ -121,8 +121,18 @@ else
         ${NOBUF} ${FULLCOMMAND} 2>&1 | \
         ${NOBUF} tr '\r' '\n' | \
         ${NOBUF} grep 'fps=' | \
-        ${NOBUF} awk 'split($9, b, "=") split($11, d, "=") \
-        {print "FPS:", $4, "Bitrate:", b[2], "Dropped Frames:", d[2], "\r"} ORS=""'
+        ${NOBUF} sed 's/=[ ]*/=/g' | \
+        ${NOBUF} awk ' \
+            split($2, f, "=") \
+            split($6, b, "=") \
+            split($8, d, "=") \
+            { print \
+                "FPS:", f[2], \
+                "Bitrate:", b[2], \
+                "Dropped Frames:", d[2], \
+                "\r" \
+            } \
+            ORS=""'
     else
         ${FULLCOMMAND}
     fi
