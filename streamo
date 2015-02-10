@@ -7,7 +7,6 @@
 # See LICENSE for more information
 #
 
-
 SIZE="1920x1080"
 RESOLUTION="1280x720"
 FRAMERATE="30"
@@ -20,16 +19,8 @@ VERBOSE="false"
 SIMULATE="false"
 FFMPEG='ffmpeg'
 
-#If you want to print command on the std, run shell with -x
-# sh -x ./shellscript
-
-log () {
-    #You can have here number and scale verbosity accordingly
-    [ "${VERBOSE}" = "true"  ] && echo "$(date +'%m-%d-%y %T') $1 $2"
-}
-
 die () {
-    log "INFO" "Exiting with error code $1"
+    [ "$2" ] && echo "$2"
     exit $1
 }
 
@@ -86,12 +77,10 @@ loadOps () {
                 die 0
                 ;;
             \?)
-                log "ERROR" "Invalid option: -$OPTARG"
-                die 1
+                die 1 "Error: Invalid option: -$OPTARG"
                 ;;
             :)
-                log "ERROR" "Option -$OPTARG requires an argument"
-                die 1
+                die 1 "Error: Option -$OPTARG requires an argument"
                 ;;
         esac
     done
@@ -99,8 +88,11 @@ loadOps () {
 
 checkAndSetVars () {
     if [ -z "$STREAMKEY" ]; then
-            log "ERROR" "Warning: You need to specify a stream key"
-            return 1
+        if [ $SIMULATE = 1 ]; then
+            echo "Warning: You need to specify a stream key"
+        else
+            die 1 "Error: You need to specify a stream key"
+        fi
     fi
 
     for c in `seq ${CHANNELS}`; do
@@ -133,25 +125,31 @@ checkAndSetVars () {
                 -pix_fmt yuv420p \
                 -f flv rtmp://live.justin.tv/app/${STREAMKEY}"
 
-    #TODO add check if FFMPEG is installed
-
     return 0
 }
 
 
 printOps () {
     local formatedText=$(echo "$FFMPEG $FFMPEGARGS" | sed -e 's/ [ ]*/ /g')
-    log "INFO" "Simulating execution ..."
     echo "$formatedText"
 }
 
 runStream () {
-    log "INFO" "Starting to stream with ${FFMPEG}"
-    eval "$FFMPEG $FFMPEGARGS" || {
-        log "ERROR" "ffmpeg finished with error or not found"
-        return 1
-    }
-    log "INFO" "Stream finished"
+    "$FFMPEG $FFMPEGARGS" 2>&1 | \
+    ${NOBUF} tr '\r' '\n' | \
+    ${NOBUF} grep 'fps=' | \
+    ${NOBUF} sed 's/=[ ]*/=/g' | \
+    ${NOBUF} awk ' \
+        split($2, f, "=") \
+        split($6, b, "=") \
+        split($8, d, "=") \
+        { print \
+            "FPS:", f[2], \
+            "Bitrate:", b[2], \
+            "Dropped Frames:", d[2], \
+            "\r" \
+        } \
+        ORS=""'
 }
 
 execWork () {
@@ -163,13 +161,9 @@ execWork () {
     fi
 }
 
-log "INFO" "START $0"
-
 loadOps "$@"
 checkAndSetVars || die 1
 execWork || die 1
-
-die 0
 
 # vim: ts=4 sw=4 sts=4 ft=sh
 
