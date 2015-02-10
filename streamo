@@ -140,7 +140,7 @@ checkAndSetVars () {
 
 
 printOps () {
-    local formatedText=$( echo "$FFMPEG $FFMPEGARGS" | sed -e 's/\s[\s]*/ /g')
+    local formatedText=$(echo "$FFMPEG $FFMPEGARGS" | sed -e 's/ [ ]*/ /g')
     log "INFO" "Simulating execution ..."
     echo "$formatedText"
 }
