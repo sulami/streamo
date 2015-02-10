@@ -24,150 +24,150 @@ FFMPEG='ffmpeg'
 # sh -x ./shellscript
 
 log () {
-	#You can have here number and scale verbosity accordingly
-	[ "${VERBOSE}" = "true"  ] && echo "$(date +'%m-%d-%y %T') $1 $2"
+    #You can have here number and scale verbosity accordingly
+    [ "${VERBOSE}" = "true"  ] && echo "$(date +'%m-%d-%y %T') $1 $2"
 }
 
 die () {
-	log "INFO" "Exiting with error code $1"
-	exit $1
+    log "INFO" "Exiting with error code $1"
+    exit $1
 }
 
 usage () {
-	echo "Options:"
-	echo "  -s <int>x<int>  - Desktop size (def: 1920x1080)"
-	echo "  -r <int>x<int>  - Stream resolution (def: 1280x720)"
-	echo "  -f <int>        - Framerate (def: 30)"
-	echo "  -k <str>        - Streamkey (Acquire from Twitch.tv)"
-	echo "  -t <int>        - Threads (def: 4)"
-	echo "  -b <int>        - Video bitrate in kb/s (def: 2500)"
-	echo "  -a <str>        - Audio framework (def: pulse)"
-	echo "  -c <int>        - Audio channels (def: 2)"
-	echo "  -v              - Verbose output"
-	echo "  -e              - Simulate execution"
-	echo "  -h              - This help output"
+    echo "Options:"
+    echo "  -s <int>x<int>  - Desktop size (def: 1920x1080)"
+    echo "  -r <int>x<int>  - Stream resolution (def: 1280x720)"
+    echo "  -f <int>        - Framerate (def: 30)"
+    echo "  -k <str>        - Streamkey (Acquire from Twitch.tv)"
+    echo "  -t <int>        - Threads (def: 4)"
+    echo "  -b <int>        - Video bitrate in kb/s (def: 2500)"
+    echo "  -a <str>        - Audio framework (def: pulse)"
+    echo "  -c <int>        - Audio channels (def: 2)"
+    echo "  -v              - Verbose output"
+    echo "  -e              - Simulate execution"
+    echo "  -h              - This help output"
 }
 
 loadOps () {
-	while getopts ":s:r:f:k:t:b:a:c:veh" opt; do
-		case $opt in
-		    s)
-		        SIZE=$OPTARG
-		        ;;
-		    r)
-		        RESOLUTION=$OPTARG
-		        ;;
-		    f)
-		        FRAMERATE=$OPTARG
-		        ;;
-		    k)
-		        STREAMKEY=$OPTARG
-		        ;;
-		    t)
-		        THREADS=$OPTARG
-		        ;;
-		    b)
-		        BITRATE=$OPTARG
-		        ;;
-		    a)
-		        AUDIO=$OPTARG
-		        ;;
-		    c)
-		        CHANNELS=$OPTARG
-		        ;;
-		    e)
-		        SIMULATE=true
-		        ;;
-		    v)
-		        VERBOSE=true
-		        ;;
-		    h)
-		        usage
-				die 0
-		        ;;
-		    \?)
-		        log "ERROR" "Invalid option: -$OPTARG"
-		        die 1
-		        ;;
-		    :)
-		        log "ERROR" "Option -$OPTARG requires an argument"
-		        die 1
-		        ;;
-		esac
-	done
+    while getopts ":s:r:f:k:t:b:a:c:veh" opt; do
+        case $opt in
+            s)
+                SIZE=$OPTARG
+                ;;
+            r)
+                RESOLUTION=$OPTARG
+                ;;
+            f)
+                FRAMERATE=$OPTARG
+                ;;
+            k)
+                STREAMKEY=$OPTARG
+                ;;
+            t)
+                THREADS=$OPTARG
+                ;;
+            b)
+                BITRATE=$OPTARG
+                ;;
+            a)
+                AUDIO=$OPTARG
+                ;;
+            c)
+                CHANNELS=$OPTARG
+                ;;
+            e)
+                SIMULATE=true
+                ;;
+            v)
+                VERBOSE=true
+                ;;
+            h)
+                usage
+                die 0
+                ;;
+            \?)
+                log "ERROR" "Invalid option: -$OPTARG"
+                die 1
+                ;;
+            :)
+                log "ERROR" "Option -$OPTARG requires an argument"
+                die 1
+                ;;
+        esac
+    done
 }
 
 checkAndSetVars () {
-	if [ -z "$STREAMKEY" ]; then
-		    log "ERROR" "Warning: You need to specify a stream key"
-		    return 1
-	fi
+    if [ -z "$STREAMKEY" ]; then
+            log "ERROR" "Warning: You need to specify a stream key"
+            return 1
+    fi
 
-	for c in `seq ${CHANNELS}`; do
-		AUDIOCODE="$AUDIOCODE -f $AUDIO -i default"
-	done
+    for c in `seq ${CHANNELS}`; do
+        AUDIOCODE="$AUDIOCODE -f $AUDIO -i default"
+    done
 
-	[ ${CHANNELS} -ne 0 ] && {
-		MIXCODE="-filter_complex \
-		         amix=inputs=${CHANNELS}:duration=first:dropout_transition=3 \
-		         -acodec libmp3lame \
-		         -ar 44100 \
-		         -b:a 128k"
-	}
+    [ ${CHANNELS} -ne 0 ] && {
+        MIXCODE="-filter_complex \
+                 amix=inputs=${CHANNELS}:duration=first:dropout_transition=3 \
+                 -acodec libmp3lame \
+                 -ar 44100 \
+                 -b:a 128k"
+    }
 
-	FFMPEGARGS="-hide_banner -f x11grab \
-				-video_size ${SIZE} \
-				-framerate ${FRAMERATE} \
-				-i ${DISPLAY}+0,0 \
-				${AUDIOCODE} \
-				-vcodec libx264 \
-				-preset veryfast \
-				-s ${RESOLUTION} \
-				-b:v ${BITRATE}k \
-				-minrate ${BITRATE}k \
-				-maxrate ${BITRATE}k \
-				-bufsize $((2 * ${BITRATE}))k \
-				-g $((2 * ${FRAMERATE})) \
-				${MIXCODE} \
-				-threads ${THREADS} \
-				-pix_fmt yuv420p \
-				-f flv rtmp://live.justin.tv/app/${STREAMKEY}"
-	
-	#TODO add check if FFMPEG is installed
+    FFMPEGARGS="-hide_banner -f x11grab \
+                -video_size ${SIZE} \
+                -framerate ${FRAMERATE} \
+                -i ${DISPLAY}+0,0 \
+                ${AUDIOCODE} \
+                -vcodec libx264 \
+                -preset veryfast \
+                -s ${RESOLUTION} \
+                -b:v ${BITRATE}k \
+                -minrate ${BITRATE}k \
+                -maxrate ${BITRATE}k \
+                -bufsize $((2 * ${BITRATE}))k \
+                -g $((2 * ${FRAMERATE})) \
+                ${MIXCODE} \
+                -threads ${THREADS} \
+                -pix_fmt yuv420p \
+                -f flv rtmp://live.justin.tv/app/${STREAMKEY}"
 
-	return 0
+    #TODO add check if FFMPEG is installed
+
+    return 0
 }
 
 
 printOps () {
-	local formatedText=$( echo "$FFMPEG $FFMPEGARGS" | sed -e 's/\s[\s]*/ /g')
-	log "INFO" "Simulating execution ..."
-	echo "$formatedText"
+    local formatedText=$( echo "$FFMPEG $FFMPEGARGS" | sed -e 's/\s[\s]*/ /g')
+    log "INFO" "Simulating execution ..."
+    echo "$formatedText"
 }
-    
+
 runStream () {
-	log "INFO" "Starting to stream with ${FFMPEG}"
-	eval "$FFMPEG $FFMPEGARGS" || {
-		log "ERROR" "ffmpeg finished with error or not found"
-		return 1
-	}
-	log "INFO" "Stream finished"
+    log "INFO" "Starting to stream with ${FFMPEG}"
+    eval "$FFMPEG $FFMPEGARGS" || {
+        log "ERROR" "ffmpeg finished with error or not found"
+        return 1
+    }
+    log "INFO" "Stream finished"
 }
 
 execWork () {
-	if [ "$SIMULATE" = "false" ]
-	then
-		runStream
-	else
-		printOps
-	fi
+    if [ "$SIMULATE" = "false" ]
+    then
+        runStream
+    else
+        printOps
+    fi
 }
 
 log "INFO" "START $0"
 
 loadOps "$@"
 checkAndSetVars || die 1
-execWork || die 1 
+execWork || die 1
 
 die 0
 
