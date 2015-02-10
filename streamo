@@ -129,28 +129,35 @@ checkAndSetVars () {
     return 0
 }
 
+formatArgs() {
+    FORMATTED=$(echo "$FFMPEG $FFMPEGARGS" | sed -e 's/ [ ]*/ /g')
+}
 
 printOps () {
-    local formatedText=$(echo "$FFMPEG $FFMPEGARGS" | sed -e 's/ [ ]*/ /g')
-    echo "$formatedText"
+    echo "$FORMATTED"
 }
 
 runStream () {
-    "$FFMPEG $FFMPEGARGS" 2>&1 | \
-    ${NOBUF} tr '\r' '\n' | \
-    ${NOBUF} grep 'fps=' | \
-    ${NOBUF} sed 's/=[ ]*/=/g' | \
-    ${NOBUF} awk ' \
-        split($2, f, "=") \
-        split($6, b, "=") \
-        split($8, d, "=") \
-        { print \
-            "FPS:", f[2], \
-            "Bitrate:", b[2], \
-            "Dropped Frames:", d[2], \
-            "\r" \
-        } \
-        ORS=""'
+    if [ $VERBOSE = 1 ]
+    then
+        $FORMATTED
+    else
+        $FORMATTED 2>&1 | \
+        ${NOBUF} tr '\r' '\n' | \
+        ${NOBUF} grep 'fps=' | \
+        ${NOBUF} sed 's/=[ ]*/=/g' | \
+        ${NOBUF} awk ' \
+            split($2, f, "=") \
+            split($6, b, "=") \
+            split($8, d, "=") \
+            { print \
+                "FPS:", f[2], \
+                "Bitrate:", b[2], \
+                "Dropped Frames:", d[2], \
+                "\r" \
+            } \
+            ORS=""'
+    fi
 }
 
 execWork () {
@@ -163,7 +170,8 @@ execWork () {
 }
 
 loadOps "$@"
-checkAndSetVars || die 1
+checkAndSetVars || die 1 "Error: could not set variables"
+formatArgs || die 1 "Error: could not format ffmpeg argmuents"
 execWork || die 1
 
 # vim: ts=4 sw=4 sts=4 ft=sh
