@@ -15,9 +15,10 @@ THREADS="4"
 BITRATE="2500"
 AUDIO="pulse"
 CHANNELS="2"
-VERBOSE="false"
-SIMULATE="false"
+VERBOSE=0
+SIMULATE=0
 FFMPEG='ffmpeg'
+NOBUF="stdbuf -e0 -o0"
 
 die () {
     [ "$2" ] && echo "$2"
@@ -67,10 +68,10 @@ loadOps () {
                 CHANNELS=$OPTARG
                 ;;
             e)
-                SIMULATE=true
+                SIMULATE=1
                 ;;
             v)
-                VERBOSE=true
+                VERBOSE=1
                 ;;
             h)
                 usage
@@ -153,11 +154,11 @@ runStream () {
 }
 
 execWork () {
-    if [ "$SIMULATE" = "false" ]
+    if [ $SIMULATE = 1 ]
     then
-        runStream
-    else
         printOps
+    else
+        runStream
     fi
 }
 
