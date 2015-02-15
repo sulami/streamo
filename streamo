@@ -15,6 +15,7 @@ THREADS="4"
 BITRATE="2500"
 AUDIO="pulse"
 CHANNELS="2"
+PRESET="veryfast"
 VERBOSE=0
 SIMULATE=0
 FFMPEG='ffmpeg'
@@ -35,6 +36,7 @@ usage () {
     echo "  -b <int>        - Video bitrate in kb/s (def: 2500)"
     echo "  -a <str>        - Audio framework (def: pulse)"
     echo "  -c <int>        - Audio channels (def: 2)"
+    echo "  -p <str>        - H264 Preset (def: veryfast)"
     echo "  -v              - Verbose output"
     echo "  -e              - Simulate execution"
     echo "  -h              - This help output"
@@ -66,6 +68,9 @@ loadOps () {
                 ;;
             c)
                 CHANNELS=$OPTARG
+                ;;
+            p)
+                PRESET=$OPTARG
                 ;;
             e)
                 SIMULATE=1
@@ -114,7 +119,7 @@ checkAndSetVars () {
                 -i ${DISPLAY}+0,0 \
                 ${AUDIOCODE} \
                 -vcodec libx264 \
-                -preset veryfast \
+                -preset ${PRESET} \
                 -s ${RESOLUTION} \
                 -b:v ${BITRATE}k \
                 -minrate ${BITRATE}k \
