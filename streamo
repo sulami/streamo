@@ -107,7 +107,8 @@ checkAndSetVars () {
 
     [ ${CHANNELS} -ne 0 ] && {
         MIXCODE="-filter_complex \
-                 amix=inputs=${CHANNELS}:duration=first:dropout_transition=3 \
+                 \"amix=inputs=${CHANNELS}:duration=first:\
+dropout_transition=3[mix];[mix]aresample=async=1000\" \
                  -acodec libmp3lame \
                  -ar 44100 \
                  -b:a 128k"
